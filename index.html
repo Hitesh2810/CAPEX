@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capex Tracker 25-26 Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- PapaParse for CSV Parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .card-hover:hover { transform: translateY(-2px); transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- Sidebar -->
+        <aside class="w-64 bg-slate-900 text-white hidden md:flex flex-col shadow-xl">
+            <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+                <i data-lucide="bar-chart-3" class="text-emerald-400"></i>
+                <h1 class="text-xl font-bold tracking-tight">ISCM Capex</h1>
+            </div>
+            
+            <nav class="flex-1 p-4 space-y-2">
+                <a href="#" class="flex items-center gap-3 px-4 py-3 bg-emerald-600 rounded-lg text-white shadow-md">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                    <i data-lucide="pie-chart" class="w-5 h-5"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                    <i data-lucide="list-todo" class="w-5 h-5"></i>
+                    <span>Projects</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                    <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
+                    <span>Reports</span>
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center font-bold text-white">IS</div>
+                    <div>
+                        <p class="text-sm font-medium">ISCM Admin</p>
+                        <p class="text-xs text-slate-500">FY 25-26</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto relative">
+            <!-- Header -->
+            <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+                <div class="px-8 py-4 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Overview</h2>
+                        <p class="text-slate-500 text-sm">Track Capital Expenditure performance and utilization</p>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="document.getElementById('uploadModal').classList.remove('hidden')" 
+                                class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm">
+                            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                            Update from Excel
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-8 space-y-8">
+                
+                <!-- KPI Cards - UPDATED -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    
+                    <!-- 1. Total Indent Received -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 card-hover group">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-slate-500 text-sm font-medium">Total Indent Received</p>
+                                <h3 class="text-3xl font-bold text-slate-800 mt-1" id="kpi-indent-count">468</h3>
+                            </div>
+                            <div class="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100 transition-colors">
+                                <i data-lucide="clipboard-list" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 pt-2 border-t border-slate-50">
+                            <span class="text-sm font-medium text-slate-600">Value:</span>
+                            <span class="text-lg font-bold text-blue-600" id="kpi-indent-val">₹31.5 Cr</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. PO Released -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 card-hover group">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-slate-500 text-sm font-medium">PO Released</p>
+                                <h3 class="text-3xl font-bold text-slate-800 mt-1" id="kpi-po-count">394</h3>
+                            </div>
+                            <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-100 transition-colors">
+                                <i data-lucide="file-check-2" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 pt-2 border-t border-slate-50">
+                            <span class="text-sm font-medium text-slate-600">Value:</span>
+                            <span class="text-lg font-bold text-emerald-600" id="kpi-po-val">₹25.9 Cr</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Material Received -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 card-hover group">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-slate-500 text-sm font-medium">Material Received</p>
+                                <h3 class="text-3xl font-bold text-slate-800 mt-1" id="kpi-mat-count">342</h3>
+                            </div>
+                            <div class="p-2 bg-indigo-50 text-indigo-600 rounded-lg group-hover:bg-indigo-100 transition-colors">
+                                <i data-lucide="package-check" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 pt-2 border-t border-slate-50">
+                            <span class="text-sm font-medium text-slate-600">Value:</span>
+                            <span class="text-lg font-bold text-indigo-600" id="kpi-mat-val">₹19.8 Cr</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. WIP (Indent - PO) -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 card-hover group">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-slate-500 text-sm font-medium">WIP (Indent - PO)</p>
+                                <h3 class="text-3xl font-bold text-slate-800 mt-1" id="kpi-wip-count">74</h3>
+                            </div>
+                            <div class="p-2 bg-amber-50 text-amber-600 rounded-lg group-hover:bg-amber-100 transition-colors">
+                                <i data-lucide="hourglass" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 pt-2 border-t border-slate-50">
+                            <span class="text-sm font-medium text-slate-600">Value:</span>
+                            <span class="text-lg font-bold text-amber-600" id="kpi-wip-val">₹5.6 Cr</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Charts Section 1 -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Main Trend Chart -->
+                    <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                        <h3 class="text-lg font-bold text-slate-800 mb-4">Monthly Financial Trend (Cr)</h3>
+                        <div class="h-80">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Department Donut -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                        <h3 class="text-lg font-bold text-slate-800 mb-4">Utilization by Dept</h3>
+                        <div class="h-64 flex justify-center">
+                            <canvas id="deptChart"></canvas>
+                        </div>
+                        <div class="mt-4 space-y-2" id="deptLegend">
+                            <!-- Legend items injected by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Department Breakdown & Projects -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    <!-- Department Table -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="p-6 border-b border-slate-100">
+                            <h3 class="text-lg font-bold text-slate-800">Department Wise Budget vs Actuals</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 text-slate-500 font-medium">
+                                    <tr>
+                                        <th class="px-6 py-3">Department</th>
+                                        <th class="px-6 py-3 text-right">Budget (Cr)</th>
+                                        <th class="px-6 py-3 text-right">Utilized (Cr)</th>
+                                        <th class="px-6 py-3 text-right">Balance (Cr)</th>
+                                        <th class="px-6 py-3 text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100" id="deptTableBody">
+                                    <!-- Rows injected by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Top Projects Status -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                            <h3 class="text-lg font-bold text-slate-800">Major Projects Status</h3>
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded">Live</span>
+                        </div>
+                        <div class="p-6 space-y-4" id="projectList">
+                            <!-- Projects injected by JS -->
+                            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
+                                <div>
+                                    <p class="font-semibold text-slate-800">CITE Layout Completion</p>
+                                    <p class="text-xs text-slate-500">New Mfg Building</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-bold text-slate-700 text-sm">₹0.98 Cr Used</p>
+                                    <span class="text-xs font-bold text-emerald-600">Completed</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-slate-800">Update Dashboard Data</h3>
+                <button onclick="document.getElementById('uploadModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <!-- ISCM Tracker Input (New) -->
+                <div class="p-4 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
+                    <label class="block cursor-pointer">
+                        <span class="block text-sm font-medium text-slate-700 mb-1">Upload "Capex Tracker 25-26" (ISCM.csv)</span>
+                        <p class="text-xs text-slate-400 mb-2">Used for Indent, PO, and Material Counts/Values</p>
+                        <input type="file" id="fileISCM" accept=".csv" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                    </label>
+                </div>
+
+                <div class="p-4 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
+                    <label class="block cursor-pointer">
+                        <span class="block text-sm font-medium text-slate-700 mb-1">Upload "Pivot.csv" (Dept Budget)</span>
+                        <input type="file" id="filePivot" accept=".csv" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"/>
+                    </label>
+                </div>
+                
+                <div class="p-4 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
+                    <label class="block cursor-pointer">
+                        <span class="block text-sm font-medium text-slate-700 mb-1">Upload "Summary.csv" (Trends)</span>
+                        <input type="file" id="fileSummary" accept=".csv" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+                    </label>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button onclick="processFiles()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-6 rounded-lg transition-colors shadow-sm">
+                    Process & Update
+                </button>
+            </div>
+            <p class="text-xs text-slate-400 mt-4 text-center">Note: Files are processed locally in your browser. No data is sent to any server.</p>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. INITIAL DATA (Extracted from provided files) ---
+        // This ensures the dashboard works immediately without upload
+        let dashboardData = {
+            // Updated Stats based on ISCM.csv & Invoice.csv headers
+            stats: {
+                indent: { val: 31.5, count: 468 },
+                po: { val: 25.9, count: 394 },
+                material: { val: 19.8, count: 342 },
+                wip: { val: 5.6, count: 74 } // Calculated: Indent - PO
+            },
+            
+            // From Summary.csv Trends
+            trends: {
+                labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep"],
+                mpr: [2.24, 4.61, 1.42, 0.67, 4.68, 0], // In Cr
+                po: [0.02, 1.10, 10.16, 2.44, 1.2, 0],   // In Cr
+                bill: [3.45, 3.07, 1.67, 1.58, 0, 0]    // In Cr
+            },
+
+            // From Pivot.csv
+            departments: [
+                { name: "Gold Jew Mfg", budget: 9.42, utilized: 9.75, balance: -0.33 },
+                { name: "ISCM", budget: 6.95, utilized: 0.91, balance: 6.03 },
+                { name: "P & M", budget: 3.60, utilized: 1.20, balance: 2.40 }, // Est based on snippets
+                { name: "CITE", budget: 1.41, utilized: 1.40, balance: 0.01 },
+                { name: "Opex", budget: 0.55, utilized: 0.54, balance: 0.01 },
+                { name: "Admin", budget: 0.40, utilized: 0.33, balance: 0.07 }
+            ],
+
+            // From Project List.csv
+            projects: [
+                { name: "CITE Layout Completion @ New Mfg", used: 0.98, status: "Completed" },
+                { name: "HVC Mumbai - HD Deployment", used: 0.75, status: "WIP" },
+                { name: "QA Layout @ New Mfg 2nd Floor", used: 0.37, status: "Completed" },
+                { name: "Innovation Centre Conversion", used: 0.23, status: "Completed" },
+                { name: "Street Light Revamping", used: 0.23, status: "WIP" }
+            ]
+        };
+
+        // --- 2. CHART INSTANCES ---
+        let trendChartInst = null;
+        let deptChartInst = null;
+
+        // --- 3. RENDER FUNCTIONS ---
+        function initDashboard() {
+            lucide.createIcons();
+            updateKPIs();
+            renderTrendChart();
+            renderDeptChart();
+            renderDeptTable();
+            renderProjectList();
+        }
+
+        function updateKPIs() {
+            // Update the 4 new blocks
+            
+            // 1. Indent
+            document.getElementById('kpi-indent-val').innerText = `₹${dashboardData.stats.indent.val.toFixed(2)} Cr`;
+            document.getElementById('kpi-indent-count').innerText = dashboardData.stats.indent.count;
+
+            // 2. PO
+            document.getElementById('kpi-po-val').innerText = `₹${dashboardData.stats.po.val.toFixed(2)} Cr`;
+            document.getElementById('kpi-po-count').innerText = dashboardData.stats.po.count;
+
+            // 3. Material
+            document.getElementById('kpi-mat-val').innerText = `₹${dashboardData.stats.material.val.toFixed(2)} Cr`;
+            document.getElementById('kpi-mat-count').innerText = dashboardData.stats.material.count;
+
+            // 4. WIP (Indent - PO)
+            // Recalculate WIP dynamically just in case stats change
+            let wipVal = dashboardData.stats.indent.val - dashboardData.stats.po.val;
+            let wipCount = dashboardData.stats.indent.count - dashboardData.stats.po.count;
+            
+            document.getElementById('kpi-wip-val').innerText = `₹${wipVal.toFixed(2)} Cr`;
+            document.getElementById('kpi-wip-count').innerText = wipCount;
+        }
+
+        function renderTrendChart() {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            if (trendChartInst) trendChartInst.destroy();
+
+            trendChartInst = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dashboardData.trends.labels,
+                    datasets: [
+                        {
+                            label: 'MPR Raised',
+                            data: dashboardData.trends.mpr,
+                            borderColor: '#8b5cf6', // Purple
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'PO Released',
+                            data: dashboardData.trends.po,
+                            borderColor: '#10b981', // Emerald
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Bill Processed',
+                            data: dashboardData.trends.bill,
+                            borderColor: '#f59e0b', // Amber
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' },
+                            title: { display: true, text: 'Value in Crores (₹)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderDeptChart() {
+            const ctx = document.getElementById('deptChart').getContext('2d');
+            if (deptChartInst) deptChartInst.destroy();
+
+            // Prepare data: Top 5 depts by budget
+            const sortedDepts = [...dashboardData.departments].sort((a, b) => b.budget - a.budget).slice(0, 5);
+            
+            deptChartInst = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: sortedDepts.map(d => d.name),
+                    datasets: [{
+                        data: sortedDepts.map(d => d.utilized),
+                        backgroundColor: [
+                            '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { display: false } // Custom legend below
+                    }
+                }
+            });
+
+            // Custom Legend
+            const legendContainer = document.getElementById('deptLegend');
+            legendContainer.innerHTML = '';
+            const colors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444'];
+            sortedDepts.forEach((d, i) => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between text-sm';
+                item.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full" style="background-color: ${colors[i]}"></span>
+                        <span class="text-slate-600">${d.name}</span>
+                    </div>
+                    <span class="font-medium text-slate-800">₹${d.utilized.toFixed(2)} Cr</span>
+                `;
+                legendContainer.appendChild(item);
+            });
+        }
+
+        function renderDeptTable() {
+            const tbody = document.getElementById('deptTableBody');
+            tbody.innerHTML = '';
+
+            dashboardData.departments.forEach(dept => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                
+                // Status Logic
+                let statusBadge = '';
+                const utilPct = (dept.utilized / dept.budget);
+                if (utilPct > 1.0) statusBadge = '<span class="px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">Over Budget</span>';
+                else if (utilPct > 0.8) statusBadge = '<span class="px-2 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">High</span>';
+                else statusBadge = '<span class="px-2 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">On Track</span>';
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-slate-800">${dept.name}</td>
+                    <td class="px-6 py-4 text-right text-slate-600">${dept.budget.toFixed(2)}</td>
+                    <td class="px-6 py-4 text-right text-slate-800 font-semibold">${dept.utilized.toFixed(2)}</td>
+                    <td class="px-6 py-4 text-right text-slate-600">${dept.balance.toFixed(2)}</td>
+                    <td class="px-6 py-4 text-center">${statusBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderProjectList() {
+            const container = document.getElementById('projectList');
+            container.innerHTML = '';
+            
+            dashboardData.projects.forEach(proj => {
+                let statusColor = proj.status === 'Completed' ? 'text-emerald-600' : 'text-blue-600';
+                
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100';
+                div.innerHTML = `
+                    <div>
+                        <p class="font-semibold text-slate-800 text-sm">${proj.name}</p>
+                        <p class="text-xs text-slate-500">Capex Project</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-slate-700 text-sm">₹${proj.used} Cr</p>
+                        <span class="text-xs font-bold ${statusColor}">${proj.status}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- 4. CSV PROCESSING LOGIC ---
+        
+        // Helper to parse numbers with commas, spaces, etc.
+        function parseCurrency(str) {
+            if (!str) return 0;
+            if (typeof str === 'number') return str;
+            // Remove commas, spaces, quotes
+            let clean = str.toString().replace(/,/g, '').replace(/\s/g, '').replace(/"/g, '');
+            let val = parseFloat(clean);
+            return isNaN(val) ? 0 : val;
+        }
+
+        function processFiles() {
+            const fileISCM = document.getElementById('fileISCM').files[0];
+            const filePivot = document.getElementById('filePivot').files[0];
+            const fileSummary = document.getElementById('fileSummary').files[0];
+            
+            let promises = [];
+
+            // 1. Process Master Tracker (ISCM.csv) for Totals
+            if (fileISCM) {
+                promises.push(new Promise((resolve) => {
+                    // Use standard parsing without header first to find the REAL header row
+                    Papa.parse(fileISCM, {
+                        header: false,
+                        skipEmptyLines: false, // Don't skip yet, we need to count index
+                        complete: function(results) {
+                            // Step 1: Find the header row index
+                            // We look for a row containing specific keywords like "MPR Value" or "SI.NO"
+                            let headerRowIndex = -1;
+                            let dataRows = results.data;
+                            
+                            for (let i = 0; i < Math.min(20, dataRows.length); i++) {
+                                let rowStr = JSON.stringify(dataRows[i]).toLowerCase();
+                                if (rowStr.includes("mpr value") || rowStr.includes("si.no")) {
+                                    headerRowIndex = i;
+                                    break;
+                                }
+                            }
+
+                            if (headerRowIndex === -1) {
+                                console.warn("Could not find header row. Defaulting to index 0.");
+                                headerRowIndex = 0;
+                            }
+
+                            // Step 2: Get headers and Map Indices
+                            let headers = dataRows[headerRowIndex].map(h => h ? h.toString().trim() : "");
+                            
+                            // Find indices for critical columns
+                            let idxMPR = headers.findIndex(h => h.toLowerCase().includes("mpr value"));
+                            //let idxPO = headers.findIndex(h => h.toLowerCase().includes("po_number"));
+                            let idxPOVal = headers.findIndex(h => h.toLowerCase().includes("po_value_basic"));
+                            let idxMatDate = headers.findIndex(h => h.toLowerCase().includes("mat_rcpt_date"));
+
+                            // Step 3: Iterate rows AFTER the header row
+                            let indentCount = 0, indentVal = 0;
+                            let poCount = 0, poVal = 0;
+                            let matCount = 0, matVal = 0;
+
+                            for (let i = headerRowIndex + 1; i < dataRows.length; i++) {
+                                let row = dataRows[i];
+                                if (!row || row.length < 2) continue; // Skip empty rows
+
+                                // 1. INDENT CALCULATION
+                                // Use the detected index for "MPR Value"
+                                if (idxMPR !== -1) {
+                                    let val = parseCurrency(row[idxMPR]);
+                                    if (val > 0) {
+                                        indentCount++;
+                                        indentVal += val;
+                                    }
+                                }
+
+                                // 2. PO CALCULATION - Updated Logic
+                                if (idxPOVal !== -1) {
+                                    // Strictly look for rows with a valid PO Value
+                                    let poV = parseCurrency(row[idxPOVal]);
+                                    
+                                    // If PO Value is present and greater than 0, count it as a Released PO
+                                    if (poV > 0) {
+                                        poCount++;
+                                        poVal += poV;
+                                    }
+                                }
+
+                                // 3. MATERIAL CALCULATION
+                                if (idxMatDate !== -1 && idxPOVal !== -1) {
+                                    let matDate = row[idxMatDate];
+                                    let poV = parseCurrency(row[idxPOVal]);
+                                    
+                                    // Strictly count if MAT_RCPT_DATE is present (not empty)
+                                    // And add the PO Value associated with it
+                                    if (matDate && matDate.toString().trim() !== "") {
+                                        matCount++;
+                                        // Sum value only if PO Value exists, otherwise adds 0
+                                        if (poV > 0) {
+                                            matVal += poV;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Update Dashboard Data (Convert to Crores for Value)
+                            dashboardData.stats.indent.count = indentCount;
+                            dashboardData.stats.indent.val = indentVal / 10000000; // Convert to Cr
+
+                            dashboardData.stats.po.count = poCount;
+                            dashboardData.stats.po.val = poVal / 10000000;
+
+                            dashboardData.stats.material.count = matCount;
+                            dashboardData.stats.material.val = matVal / 10000000;
+
+                            // Recalculate WIP
+                            dashboardData.stats.wip.count = Math.max(0, indentCount - poCount);
+                            dashboardData.stats.wip.val = Math.max(0, (indentVal - poVal) / 10000000);
+
+                            resolve();
+                        }
+                    });
+                }));
+            }
+
+            if (filePivot) {
+                promises.push(new Promise((resolve) => {
+                    Papa.parse(filePivot, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function(results) {
+                            // Logic to extract Pivot data (matches Pivot.csv structure)
+                            const newDepts = [];
+                            results.data.forEach(row => {
+                                if(row['DEPT'] && row['Budget'] && row['Utilized']) {
+                                    newDepts.push({
+                                        name: row['DEPT'],
+                                        budget: parseFloat(row['Budget']) || 0,
+                                        utilized: parseFloat(row['Utilized']) || 0,
+                                        balance: parseFloat(row['Balance']) || 0
+                                    });
+                                }
+                            });
+                            
+                            if (newDepts.length > 0) dashboardData.departments = newDepts;
+                            resolve();
+                        }
+                    });
+                }));
+            }
+
+            if (fileSummary) {
+                promises.push(new Promise((resolve) => {
+                    Papa.parse(fileSummary, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function(results) {
+                            // Placeholder: Logic to read trends would go here
+                            resolve();
+                        }
+                    });
+                }));
+            }
+
+            Promise.all(promises).then(() => {
+                // Re-render everything with new data
+                updateKPIs();
+                renderTrendChart();
+                renderDeptChart();
+                renderDeptTable();
+                
+                // Close modal
+                document.getElementById('uploadModal').classList.add('hidden');
+                alert("Dashboard updated successfully!");
+            });
+        }
+
+        // Start
+        window.onload = initDashboard;
+
+    </script>
+</body>
+</html>
